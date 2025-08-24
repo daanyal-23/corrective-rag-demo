@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.env
+.env
+.env.example
+venv/
+*.egg-info
+
+# VSCode
+.vscode/
+
+# Environment / Secrets
+*.ini
+*.toml
+.env.local
+secrets.json
+
+# Streamlit cache
+.streamlit/
