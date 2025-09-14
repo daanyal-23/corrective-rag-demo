@@ -1,10 +1,11 @@
-from tools import retrieval_grader
+from src.tools import retrieval_grader
 
 def grade_documents(state):
     """
-    Determines whether the retrived documnets are relevant to the question
+    Determines whether the retrieved documents are relevant to the question.
     """
-    print("---CHECK DOCUMENT RELEVANCE TO THE QUESTION---")
+    state["logs"].append("---CHECK DOCUMENT RELEVANCE TO THE QUESTION---")
+
     question = state["question"]
     documents = state["documents"]
 
@@ -16,12 +17,15 @@ def grade_documents(state):
             {"question": question, "document": d.page_content}
         )
         grade = score.binary_score
+
         if grade == "yes":
-            print("---GRADE:DOCUMENT RELEVANT---")
+            state["logs"].append("---GRADE: DOCUMENT RELEVANT---")
             filtered_docs.append(d)
         else:
-            print("---GRADE:DOCUMENT NOT RELEVANT---")
+            state["logs"].append("---GRADE: DOCUMENT NOT RELEVANT---")
             web_search = "Yes"
             continue
 
-    return {"documents": filtered_docs, "question": question, "web_search": web_search}
+    state["documents"] = filtered_docs
+    state["web_search"] = web_search
+    return state

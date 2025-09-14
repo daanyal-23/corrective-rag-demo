@@ -1,10 +1,10 @@
-from tools import rag_chain
+from src.tools import rag_chain
 
 def generate(state):
     """
     Generate answer
     """
-    print("---GENERATE---")
+    state["logs"].append("---GENERATE---")
     question = state["question"]
     documents = state["documents"]
 

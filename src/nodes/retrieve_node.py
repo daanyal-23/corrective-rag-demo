@@ -1,14 +1,18 @@
-from tools import retriever
+from src.tools import retriever
 
 def retrive(state):
     """
-    Retreive documnets
+    Retrieve documents
     Args:
-        state(dict): The current graph state
-    returns:
-        state(dict): New key added to the state, documents, that contains retrived documents
+        state (dict): The current graph state
+    Returns:
+        state (dict): Updated state with retrieved documents
     """
-    print("---RETRIEVE---")
+    # Log instead of print
+    state["logs"].append("---RETRIEVE---")
+
     question = state["question"]
     documents = retriever.invoke(question)
-    return {"documents": documents, "question": question}
+
+    state["documents"] = documents
+    return state

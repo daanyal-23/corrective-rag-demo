@@ -1,20 +1,22 @@
 from langgraph.graph import START, END, StateGraph
-from state.graph_state import GraphState
-from nodes import retrive, grade_documents, generate, transform_query, web_search
+from src.state.graph_state import GraphState
+from src.nodes import retrive, grade_documents, generate, transform_query, web_search
 
 def decide_to_generate(state):
-    """Determines whether to generate a answer , or re-generate a question"""
-    print("---ASSESS GRADED DOCUMENTS---")
-    state["question"]
+    """Determines whether to generate an answer or re-generate a question"""
+    state["logs"].append("---ASSESS GRADED DOCUMENTS---")
+
     web_search_flag = state["web_search"]
-    state["documents"]
 
     if web_search_flag == "Yes":
-        print("---DECISION:ALL DOCUMENTS ARE RELEVANT TO THE QUESTION,TRANSFORM THE QUERY---")
+        state["logs"].append(
+            "---DECISION: ALL DOCUMENTS ARE NOT RELEVANT TO THE QUESTION, TRANSFORM THE QUERY---"
+        )
         return "transform_query"
     else:
-        print("---DECISION:GENERATE---")
+        state["logs"].append("---DECISION: GENERATE---")
         return "generate"
+
 
 def build_graph():
     workflow = StateGraph(GraphState)

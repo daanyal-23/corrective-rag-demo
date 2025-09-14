@@ -1,8 +1,8 @@
-from tools import question_rewriter
+from src.tools import question_rewriter
 
 def transform_query(state):
     """Transform the query to produce a better result"""
-    print("---TRANSFORM QUERY---")
+    state["logs"].append("---TRANSFORM QUERY---")
     question = state["question"]
     documents = state["documents"]
 

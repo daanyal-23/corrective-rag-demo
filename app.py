@@ -15,8 +15,12 @@ question = st.text_input("Enter your question:")
 if question:
     try:
         graph = build_graph()
-        # initial state: only question; the graph fills the rest exactly like your code
-        result = graph.invoke({"question": question})
+        result = graph.invoke({"question": question, "logs": []})  # start with empty logs
+
+        st.subheader("Execution Steps:")
+        for log in result.get("logs", []):
+            st.text(log)
+
         st.subheader("Generation:")
         st.write(result.get("generation", ""))
     except Exception as e:

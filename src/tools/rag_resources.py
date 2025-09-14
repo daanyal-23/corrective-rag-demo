@@ -2,12 +2,15 @@
 
 import os
 import json
-
+from dotenv import load_dotenv
 # --- Embeddings, loaders, vectorstore, retriever ---
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import WebBaseLoader
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings  # updated
+
+load_dotenv(dotenv_path="C:/Users/Mr. Daanyal/Desktop/Agentic_Bootcamp/CorrectiveRAG/.env")
+
 
 embed = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 

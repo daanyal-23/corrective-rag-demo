@@ -9,8 +9,10 @@ class GraphState(TypedDict):
         generation: LLM generation
         web_search: whether to add search
         documents: list of documents
+        logs: list of status messages to display on UI
     """
     question: str
     generation: str
     web_search: str
     documents: List[str]
+    logs: List[str]   # NEW
