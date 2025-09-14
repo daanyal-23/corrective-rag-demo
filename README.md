@@ -48,7 +48,6 @@ CorrectiveRAG/
 ## ⚙️ Installation & Setup
 
 ### 1️⃣ Clone the Repository
-```bash
 git clone https://github.com/daanyal-23/corrective-rag-demo.git
 cd corrective-rag-demo
 2️⃣ Create a Virtual Environment
@@ -90,3 +89,4 @@ Pull requests are welcome!
 For major changes, please open an issue first to discuss what you would like to improve.
 
 Made with ❤️ using LangGraph + Groq + Streamlit
+
