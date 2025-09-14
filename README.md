@@ -16,35 +16,35 @@ It demonstrates how to build an **intelligent RAG system** that retrieves, grade
 
 ## 📂 Project Structure
 
-CorrectiveRAG/                # Root project folder
-├── app.py                    # Streamlit app entrypoint
-├── main.py                   # CLI stub for graph testing
-├── requirements.txt          # Project dependencies
-├── README.md                 # Documentation
-├── .env.example              # Example environment variables
+CorrectiveRAG/ # Root project folder
+├── app.py # Streamlit app entrypoint
+├── main.py # CLI stub for graph testing
+├── requirements.txt # Project dependencies
+├── README.md # Documentation
+├── .env.example # Example environment variables
 │
 ├── src/
-│   ├── langgraphCorrectiveAI/    # LangGraph corrective RAG workflows
-│   │   └── graph/workflow.py     # Core workflow (retrieve → grade → transform → web search → generate)
-│   │
-│   ├── nodes/                    # Modular workflow nodes
-│   │   ├── retrieve_node.py
-│   │   ├── grade_node.py
-│   │   ├── transform_node.py
-│   │   ├── web_search_node.py
-│   │   └── generate_node.py
-│   │
-│   ├── tools/                    # Tools (retrievers, graders, web search utilities)
-│   │   └── search_tool.py
-│   │
-│   └── state/
-│       └── graph_state.py        # Shared state across workflow execution
-│
-└── UI/streamlitUI/               # Streamlit-based UI layer
-    ├── display_result.py
-    ├── loadui.py
-    └── uiconfigfile.py
-
+│ ├── langgraphCorrectiveAI/ # LangGraph corrective RAG workflows
+│ │ ├── graph/
+│ │ │ └── workflow.py # Core workflow (retrieve → grade → transform → web search → generate)
+│ │ │
+│ │ ├── nodes/ # Modular workflow nodes
+│ │ │ ├── retrieve_node.py
+│ │ │ ├── grade_node.py
+│ │ │ ├── transform_node.py
+│ │ │ ├── web_search_node.py
+│ │ │ └── generate_node.py
+│ │ │
+│ │ ├── tools/ # Tools (retrievers, graders, web search utilities)
+│ │ │ └── search_tool.py
+│ │ │
+│ │ └── state/
+│ │ └── graph_state.py # Shared state across workflow execution
+│ │
+│ └── UI/streamlitUI/ # Streamlit-based UI layer
+│ ├── display_result.py
+│ ├── loadui.py
+│ └── uiconfigfile.py
 
 ---
 
@@ -92,5 +92,6 @@ Pull requests are welcome!
 For major changes, please open an issue first to discuss what you would like to improve.
 
 Made with ❤️ using LangGraph + Groq + Streamlit
+
 
 
