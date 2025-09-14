@@ -15,32 +15,35 @@ It demonstrates how to build an **intelligent RAG system** that retrieves, grade
 ---
 
 ## 📂 Project Structure
-CorrectiveRAG/
-│── app.py # Streamlit app entrypoint
-│── main.py # CLI stub for graph testing
-│── requirements.txt # Project dependencies
-│── README.md # Documentation
+
+CorrectiveRAG/                # Root project folder
+├── app.py                    # Streamlit app entrypoint
+├── main.py                   # CLI stub for graph testing
+├── requirements.txt          # Project dependencies
+├── README.md                 # Documentation
+├── .env.example              # Example environment variables
 │
 ├── src/
-│ ├── langgraphCorrectiveAI/
-│ │ └── graph/workflow.py # Workflow definition using LangGraph
-│ │
-│ ├── nodes/ # Nodes for each step of the workflow
-│ │ ├── retrieve_node.py
-│ │ ├── grade_node.py
-│ │ ├── generate_node.py
-│ │ ├── transform_node.py
-│ │ └── web_search_node.py
-│ │
-│ ├── state/graph_state.py # Shared state across workflow nodes
-│ ├── tools/rag_resources.py # Tools (retriever, grader, web search)
-│ └── LLMs/chat_model.py # Groq LLM setup
+│   ├── langgraphCorrectiveAI/    # LangGraph corrective RAG workflows
+│   │   └── graph/workflow.py     # Core workflow (retrieve → grade → transform → web search → generate)
+│   │
+│   ├── nodes/                    # Modular workflow nodes
+│   │   ├── retrieve_node.py
+│   │   ├── grade_node.py
+│   │   ├── transform_node.py
+│   │   ├── web_search_node.py
+│   │   └── generate_node.py
+│   │
+│   ├── tools/                    # Tools (retrievers, graders, web search utilities)
+│   │   └── search_tool.py
+│   │
+│   └── state/
+│       └── graph_state.py        # Shared state across workflow execution
 │
-└── UI/streamlitUI/
-├── display_result.py # Display generation in UI
-├── loadui.py # Input helper
-├── uiconfigfile.py # Config loader
-└── uiconfigfile.ini # Config file
+└── UI/streamlitUI/               # Streamlit-based UI layer
+    ├── display_result.py
+    ├── loadui.py
+    └── uiconfigfile.py
 
 
 ---
@@ -89,4 +92,5 @@ Pull requests are welcome!
 For major changes, please open an issue first to discuss what you would like to improve.
 
 Made with ❤️ using LangGraph + Groq + Streamlit
+
 
