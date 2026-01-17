@@ -1,3 +1,4 @@
+import json
 from src.tools import retrieval_grader
 
 def grade_documents(state):
@@ -16,7 +17,11 @@ def grade_documents(state):
         score = retrieval_grader.invoke(
             {"question": question, "document": d.page_content}
         )
-        grade = score.binary_score
+        try:
+            grade = score["binary_score"]
+        except (KeyError, TypeError):
+            # Fallback to 'no' if parsing fails
+            grade = "no"
 
         if grade == "yes":
             state["logs"].append("---GRADE: DOCUMENT RELEVANT---")

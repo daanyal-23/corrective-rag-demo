@@ -37,20 +37,15 @@ retriever = vectorstore.as_retriever()
 # --- Retrieval Grader setup ---
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_groq import ChatGroq
-from pydantic import BaseModel, Field
+from langchain_core.output_parsers import JsonOutputParser
 
-class GradeDocuments(BaseModel):
-    """Binary score for relevance check on the retrieved documents"""
-    binary_score: str = Field(
-        description="Documents are relevant to the question, 'yes' or 'no'"
-    )
-
-llm = ChatGroq(model="gemma2-9b-it", api_key=os.getenv("GROQ_API_KEY"))
-structured_llm_grader = llm.with_structured_output(GradeDocuments)
+llm = ChatGroq(model="llama-3.1-8b-instant", api_key=os.getenv("GROQ_API_KEY")).bind_tools([])
 
 system = """You are a grader assessing the relevance of retrieved documents to a user question.
 If the document contains keyword(s) or semantic meaning related to the question, grade it as relevant.
-Give a binary score 'yes' or 'no' score to indicate whether the document is relevant to the question."""
+Give a binary score 'yes' or 'no' score to indicate whether the document is relevant to the question.
+Output your response as a JSON object in the format: {{"binary_score": "yes"}} or {{"binary_score": "no"}}.
+Do not use function calls or tool calls. Respond only with the JSON object."""
 
 grade_prompt = ChatPromptTemplate.from_messages(
     [
@@ -59,14 +54,14 @@ grade_prompt = ChatPromptTemplate.from_messages(
     ]
 )
 
-retrieval_grader = grade_prompt | structured_llm_grader
+retrieval_grader = grade_prompt | llm | JsonOutputParser()
 
 # --- RAG generate chain ---
 from langchain import hub
 from langchain_core.output_parsers import StrOutputParser
 
 prompt = hub.pull("rlm/rag-prompt")
-llm = ChatGroq(model="gemma2-9b-it", api_key=os.getenv("GROQ_API_KEY"))
+llm = ChatGroq(model="llama-3.1-8b-instant", api_key=os.getenv("GROQ_API_KEY"))
 
 def format_docs(docs):
     return "\n\n".join(doc.page_content for doc in docs)
@@ -88,6 +83,7 @@ re_write_prompt = ChatPromptTemplate.from_messages(
     ]
 )
 
+llm = ChatGroq(model="llama-3.1-8b-instant", api_key=os.getenv("GROQ_API_KEY"), model_kwargs={"tool_choice": "none"})
 question_rewriter = re_write_prompt | llm | StrOutputParser()
 
 # --- Web search tool (with safe wrapper) ---
