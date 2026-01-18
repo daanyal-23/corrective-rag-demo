@@ -82,7 +82,7 @@ system_prompt = """You are a grader assessing the relevance of retrieved documen
 If the document contains keyword(s) or semantic meaning related to the question, grade it as relevant.
 Give a binary score 'yes' or 'no'.
 Respond ONLY with a JSON object:
-{"binary_score": "yes"} or {"binary_score": "no"}.
+{{"binary_score": "yes"}} or {{"binary_score": "no"}}.
 """
 
 grade_prompt = ChatPromptTemplate.from_messages(
@@ -157,3 +157,7 @@ def safe_web_search(query: str):
     except Exception as e:
         print("⚠️ Tavily search failed:", e)
         return []
+    
+# Backward compatibility exports
+embed = get_embeddings()
+llm = rag_llm
