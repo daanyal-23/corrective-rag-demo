@@ -8,11 +8,21 @@ def retrive(state):
     Returns:
         state (dict): Updated state with retrieved documents
     """
-    # Log instead of print
+
+    # Ensure logs exist
+    if "logs" not in state:
+        state["logs"] = []
+
     state["logs"].append("---RETRIEVE---")
 
     question = state["question"]
-    documents = retriever.invoke(question)
 
+    # 🔴 CRITICAL FIX: Handle empty / unavailable retriever
+    if retriever is None:
+        state["logs"].append("⚠️ Retriever unavailable, returning empty documents.")
+        state["documents"] = []
+        return state
+
+    documents = retriever.invoke(question)
     state["documents"] = documents
     return state
