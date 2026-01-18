@@ -30,7 +30,7 @@ def get_embeddings():
 URLS = [
     "https://lilianweng.github.io/posts/2023-06-23-agent/",
     "https://lilianweng.github.io/posts/2023-03-15-prompt-engineering/",
-    # GitHub HTML pages are unreliable; kept but safely handled
+    # GitHub HTML pages are unreliable; safely handled
     "https://github.com/phaneendra2429/Agent-RAG/blob/main/testing.ipynb",
 ]
 
@@ -63,7 +63,6 @@ def build_retriever():
     doc_splits = text_splitter.split_documents(docs)
 
     # 🔴 FINAL CRITICAL GUARD
-    # Remove empty / invalid chunks (prevents FAISS crash)
     doc_splits = [
         d for d in doc_splits
         if d.page_content and d.page_content.strip()
@@ -112,12 +111,25 @@ grade_prompt = ChatPromptTemplate.from_messages(
 retrieval_grader = grade_prompt | grader_llm | JsonOutputParser()
 
 # -------------------------------
-# RAG Generation Chain
+# RAG Generation Chain (INLINE PROMPT)
 # -------------------------------
-from langchain import hub
 from langchain_core.output_parsers import StrOutputParser
 
-rag_prompt = hub.pull("rlm/rag-prompt")
+rag_prompt = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            "You are an assistant for question-answering tasks. "
+            "Use the following retrieved context to answer the question. "
+            "If you do not know the answer, say you do not know. "
+            "Use three sentences maximum and keep the answer concise."
+        ),
+        (
+            "human",
+            "Question: {question}\n\nContext:\n{context}"
+        ),
+    ]
+)
 
 rag_llm = ChatGroq(
     model="llama-3.1-8b-instant",
@@ -127,7 +139,15 @@ rag_llm = ChatGroq(
 def format_docs(docs):
     return "\n\n".join(doc.page_content for doc in docs)
 
-rag_chain = rag_prompt | rag_llm | StrOutputParser()
+rag_chain = (
+    {
+        "context": lambda x: format_docs(x.get("documents", [])),
+        "question": lambda x: x["question"],
+    }
+    | rag_prompt
+    | rag_llm
+    | StrOutputParser()
+)
 
 # -------------------------------
 # Question Rewriter
