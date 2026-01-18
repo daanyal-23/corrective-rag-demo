@@ -8,12 +8,10 @@ from dotenv import load_dotenv
 # -------------------------------
 # Environment
 # -------------------------------
-# Streamlit Cloud loads secrets automatically.
-# Local users can still use a .env file.
 load_dotenv()
 
 # -------------------------------
-# Embeddings & Vector Store
+# Embeddings
 # -------------------------------
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import WebBaseLoader
@@ -32,6 +30,7 @@ def get_embeddings():
 URLS = [
     "https://lilianweng.github.io/posts/2023-06-23-agent/",
     "https://lilianweng.github.io/posts/2023-03-15-prompt-engineering/",
+    # GitHub HTML pages are unreliable; kept but safely handled
     "https://github.com/phaneendra2429/Agent-RAG/blob/main/testing.ipynb",
 ]
 
@@ -45,9 +44,16 @@ def load_web_docs(urls):
             print(f"⚠️ Failed to load {url}: {e}")
     return docs
 
+# -------------------------------
+# Retriever (FULLY GUARDED)
+# -------------------------------
 @st.cache_resource
 def build_retriever():
     docs = load_web_docs(URLS)
+
+    if not docs:
+        print("⚠️ No documents loaded.")
+        return None
 
     text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
         chunk_size=500,
@@ -56,6 +62,17 @@ def build_retriever():
 
     doc_splits = text_splitter.split_documents(docs)
 
+    # 🔴 FINAL CRITICAL GUARD
+    # Remove empty / invalid chunks (prevents FAISS crash)
+    doc_splits = [
+        d for d in doc_splits
+        if d.page_content and d.page_content.strip()
+    ]
+
+    if not doc_splits:
+        print("⚠️ All document chunks were empty after splitting.")
+        return None
+
     vectorstore = FAISS.from_documents(
         documents=doc_splits,
         embedding=get_embeddings(),
@@ -63,7 +80,7 @@ def build_retriever():
 
     return vectorstore.as_retriever()
 
-# 🔑 This is what other modules import
+# What other modules import
 retriever = build_retriever()
 
 # -------------------------------
@@ -157,7 +174,9 @@ def safe_web_search(query: str):
     except Exception as e:
         print("⚠️ Tavily search failed:", e)
         return []
-    
+
+# -------------------------------
 # Backward compatibility exports
+# -------------------------------
 embed = get_embeddings()
 llm = rag_llm
