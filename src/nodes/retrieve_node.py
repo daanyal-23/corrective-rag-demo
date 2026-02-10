@@ -1,4 +1,6 @@
 from src.tools import retriever
+from UI.streamlitUI.execution_trace import ExecutionTrace
+
 
 def retrive(state):
     """
@@ -9,20 +11,24 @@ def retrive(state):
         state (dict): Updated state with retrieved documents
     """
 
-    # Ensure logs exist
-    if "logs" not in state:
-        state["logs"] = []
-
-    state["logs"].append("---RETRIEVE---")
-
+    trace = ExecutionTrace()
     question = state["question"]
 
-    # 🔴 CRITICAL FIX: Handle empty / unavailable retriever
+    # 🔴 Handle empty / unavailable retriever safely
     if retriever is None:
-        state["logs"].append("⚠️ Retriever unavailable, returning empty documents.")
+        trace.add_step(
+            "🔍 Retrieve Context",
+            "No local documents available — skipping retrieval."
+        )
         state["documents"] = []
         return state
 
     documents = retriever.invoke(question)
+
+    trace.add_step(
+        "🔍 Retrieve Context",
+        f"Retrieved {len(documents)} documents from available sources."
+    )
+
     state["documents"] = documents
     return state

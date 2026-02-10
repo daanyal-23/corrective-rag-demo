@@ -1,18 +1,19 @@
 from typing import List
 from typing_extensions import TypedDict
+from langchain_core.documents import Document
+
 
 class GraphState(TypedDict):
-    """Represents the state of our graph.
+    """
+    Represents the state of the Corrective RAG graph.
 
     Attributes:
-        question: question
-        generation: LLM generation
-        web_search: whether to add search
-        documents: list of documents
-        logs: list of status messages to display on UI
+        question: User question
+        generation: Final LLM-generated answer
+        web_search: Flag indicating whether web search is required ("Yes" / "No")
+        documents: List of retrieved documents
     """
     question: str
     generation: str
     web_search: str
-    documents: List[str]
-    logs: List[str]   # NEW
+    documents: List[Document]

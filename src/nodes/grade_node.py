@@ -1,35 +1,40 @@
-import json
 from src.tools import retrieval_grader
+from UI.streamlitUI.execution_trace import ExecutionTrace
+
 
 def grade_documents(state):
     """
     Determines whether the retrieved documents are relevant to the question.
     """
-    state["logs"].append("---CHECK DOCUMENT RELEVANCE TO THE QUESTION---")
+
+    trace = ExecutionTrace()
 
     question = state["question"]
-    documents = state["documents"]
+    documents = state.get("documents", [])
 
     filtered_docs = []
     web_search = "No"
 
     for d in documents:
-        score = retrieval_grader.invoke(
+        result = retrieval_grader.invoke(
             {"question": question, "document": d.page_content}
         )
+
         try:
-            grade = score["binary_score"]
+            grade = result["binary_score"]
         except (KeyError, TypeError):
-            # Fallback to 'no' if parsing fails
             grade = "no"
 
         if grade == "yes":
-            state["logs"].append("---GRADE: DOCUMENT RELEVANT---")
             filtered_docs.append(d)
         else:
-            state["logs"].append("---GRADE: DOCUMENT NOT RELEVANT---")
             web_search = "Yes"
-            continue
+
+    # ✅ Human-readable execution trace (single summary step)
+    trace.add_step(
+        "📄 Evaluate Retrieved Documents",
+        f"{len(filtered_docs)} / {len(documents)} documents marked as relevant."
+    )
 
     state["documents"] = filtered_docs
     state["web_search"] = web_search

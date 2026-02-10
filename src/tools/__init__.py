@@ -4,7 +4,8 @@ from .rag_resources import (
     retrieval_grader,
     rag_chain,
     question_rewriter,
-    web_search_tool,
+    safe_web_search,
+    llm,
 )
 
 __all__ = [
@@ -13,5 +14,6 @@ __all__ = [
     "retrieval_grader",
     "rag_chain",
     "question_rewriter",
-    "web_search_tool",
+    "safe_web_search",
+    "llm",
 ]
