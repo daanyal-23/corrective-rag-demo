@@ -1,7 +1,7 @@
-from src.tools import question_rewriter
+from src.tools.rag_resources import get_question_rewriter
 from UI.streamlitUI.execution_trace import ExecutionTrace
 
-MAX_QUERY_CHARS = 350  # keep under the 400-char API limit
+MAX_QUERY_CHARS = 350  # keep under API limit
 
 
 def transform_query(state):
@@ -28,15 +28,23 @@ def transform_query(state):
     )
 
     try:
-        better_question = question_rewriter.invoke({"question": question})
+        # ✅ LAZY INITIALIZATION (CI-safe)
+        question_rewriter = get_question_rewriter()
+
+        better_question = question_rewriter.invoke(
+            {"question": question}
+        )
         better_question = str(better_question)
 
-        # Enforce query length safety
+        # Length safety
         if len(better_question) > MAX_QUERY_CHARS:
             trace.add_advanced_log(
-                f"Rewritten query too long ({len(better_question)} chars). Truncated to {MAX_QUERY_CHARS} chars."
+                f"Rewritten query too long ({len(better_question)} chars). "
+                f"Truncated to {MAX_QUERY_CHARS} chars."
             )
-            better_question = better_question[:MAX_QUERY_CHARS] + "... [truncated]"
+            better_question = (
+                better_question[:MAX_QUERY_CHARS] + "... [truncated]"
+            )
 
         state["question"] = better_question
         state["documents"] = documents
@@ -47,9 +55,11 @@ def transform_query(state):
         )
 
     except Exception as e:
-        trace.add_advanced_log(f"Query transformation failed: {str(e)}")
+        trace.add_advanced_log(
+            f"Query transformation failed: {str(e)}"
+        )
 
-        # Fallback: keep original question
+        # Fallback to original
         state["question"] = question
         state["documents"] = documents
 

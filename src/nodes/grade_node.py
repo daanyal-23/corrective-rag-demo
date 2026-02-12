@@ -1,4 +1,4 @@
-from src.tools import retrieval_grader
+from src.tools.rag_resources import get_retrieval_grader
 from UI.streamlitUI.execution_trace import ExecutionTrace
 
 
@@ -15,14 +15,18 @@ def grade_documents(state):
     filtered_docs = []
     web_search = "No"
 
-    for d in documents:
-        result = retrieval_grader.invoke(
-            {"question": question, "document": d.page_content}
-        )
+    # ✅ Lazy initialization (CI-safe)
+    retrieval_grader = get_retrieval_grader()
 
+    for d in documents:
         try:
-            grade = result["binary_score"]
-        except (KeyError, TypeError):
+            result = retrieval_grader.invoke(
+                {"question": question, "document": d.page_content}
+            )
+
+            grade = result.get("binary_score", "no")
+
+        except Exception:
             grade = "no"
 
         if grade == "yes":
@@ -30,7 +34,6 @@ def grade_documents(state):
         else:
             web_search = "Yes"
 
-    # ✅ Human-readable execution trace (single summary step)
     trace.add_step(
         "📄 Evaluate Retrieved Documents",
         f"{len(filtered_docs)} / {len(documents)} documents marked as relevant."

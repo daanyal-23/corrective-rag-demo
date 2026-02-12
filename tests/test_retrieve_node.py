@@ -1,6 +1,3 @@
-import types
-from src.nodes.retrieve_node import retrive
-
 def test_retrieve_with_mock(monkeypatch):
 
     class MockRetriever:
@@ -8,13 +5,13 @@ def test_retrieve_with_mock(monkeypatch):
             return ["doc1", "doc2"]
 
     monkeypatch.setattr(
-        "src.nodes.retrieve_node.retriever",
-        MockRetriever()
+        "src.nodes.retrieve_node.get_retriever",
+        lambda: MockRetriever()
     )
 
-    state = {"question": "test"}
+    from src.nodes.retrieve_node import retrive
 
+    state = {"question": "test"}
     result = retrive(state)
 
-    assert "documents" in result
-    assert len(result["documents"]) == 2
+    assert result["documents"] == ["doc1", "doc2"]

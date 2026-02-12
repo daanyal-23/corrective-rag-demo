@@ -1,59 +1,36 @@
 from src.langgraphCorrectiveAI.graph.workflow import build_graph
 
-
 def test_graph_generates_without_web(monkeypatch):
-    """
-    Full graph flow test:
-    - Retrieval returns a document
-    - Grader marks it relevant
-    - Decision routes directly to generate
-    - Generate node is mocked to avoid real LLM call
-    """
 
-    # -----------------------
-    # Mock Retriever
-    # -----------------------
     class MockRetriever:
         def invoke(self, question):
             return [type("Doc", (), {"page_content": "content"})()]
 
-    monkeypatch.setattr(
-        "src.nodes.retrieve_node.retriever",
-        MockRetriever()
-    )
-
-    # -----------------------
-    # Mock Grader
-    # -----------------------
     class MockGrader:
         def invoke(self, payload):
             return {"binary_score": "yes"}
 
-    monkeypatch.setattr(
-        "src.nodes.grade_node.retrieval_grader",
-        MockGrader()
-    )
-
-    # -----------------------
-    # Mock Generate Node
-    # ⚠️ PATCH WHERE GRAPH IMPORTED IT
-    # -----------------------
-    def mock_generate(state):
-        state["generation"] = "final answer"
-        return state
+    class MockRagChain:
+        def invoke(self, payload):
+            return "final answer"
 
     monkeypatch.setattr(
-        "src.langgraphCorrectiveAI.graph.workflow.generate",
-        mock_generate
+        "src.nodes.retrieve_node.get_retriever",
+        lambda: MockRetriever()
     )
 
-    # -----------------------
-    # Build Graph & Invoke
-    # -----------------------
+    monkeypatch.setattr(
+        "src.nodes.grade_node.get_retrieval_grader",
+        lambda: MockGrader()
+    )
+
+    monkeypatch.setattr(
+        "src.nodes.generate_node.get_rag_chain",
+        lambda: MockRagChain()
+    )
+
     graph = build_graph()
+
     result = graph.invoke({"question": "test"})
 
-    # -----------------------
-    # Assertion
-    # -----------------------
     assert result["generation"] == "final answer"

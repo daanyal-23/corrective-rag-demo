@@ -5,18 +5,17 @@ import json
 import streamlit as st
 from dotenv import load_dotenv
 
-# -------------------------------
-# Environment
-# -------------------------------
 load_dotenv()
 
-# -------------------------------
-# Embeddings
-# -------------------------------
+# ============================================================
+# EMBEDDINGS
+# ============================================================
+
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import WebBaseLoader
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
+
 
 @st.cache_resource
 def get_embeddings():
@@ -24,15 +23,17 @@ def get_embeddings():
         model_name="sentence-transformers/all-MiniLM-L6-v2"
     )
 
-# -------------------------------
-# Web Document Loading (SAFE)
-# -------------------------------
+
+# ============================================================
+# DOCUMENT LOADING
+# ============================================================
+
 URLS = [
     "https://lilianweng.github.io/posts/2023-06-23-agent/",
     "https://lilianweng.github.io/posts/2023-03-15-prompt-engineering/",
-    # GitHub HTML pages are unreliable; safely handled
     "https://github.com/phaneendra2429/Agent-RAG/blob/main/testing.ipynb",
 ]
+
 
 @st.cache_resource
 def load_web_docs(urls):
@@ -44,9 +45,11 @@ def load_web_docs(urls):
             print(f"⚠️ Failed to load {url}: {e}")
     return docs
 
-# -------------------------------
-# Retriever (FULLY GUARDED)
-# -------------------------------
+
+# ============================================================
+# RETRIEVER (LAZY)
+# ============================================================
+
 @st.cache_resource
 def build_retriever():
     docs = load_web_docs(URLS)
@@ -62,14 +65,13 @@ def build_retriever():
 
     doc_splits = text_splitter.split_documents(docs)
 
-    # 🔴 FINAL CRITICAL GUARD
     doc_splits = [
         d for d in doc_splits
         if d.page_content and d.page_content.strip()
     ]
 
     if not doc_splits:
-        print("⚠️ All document chunks were empty after splitting.")
+        print("⚠️ All document chunks empty.")
         return None
 
     vectorstore = FAISS.from_documents(
@@ -79,108 +81,129 @@ def build_retriever():
 
     return vectorstore.as_retriever()
 
-# What other modules import
-retriever = build_retriever()
 
-# -------------------------------
-# Retrieval Grader
-# -------------------------------
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import JsonOutputParser
+def get_retriever():
+    return build_retriever()
+
+
+# ============================================================
+# 🔥 LAZY GROQ INITIALIZATION
+# ============================================================
+
 from langchain_groq import ChatGroq
 
-grader_llm = ChatGroq(
-    model="llama-3.1-8b-instant",
-    api_key=os.getenv("GROQ_API_KEY"),
-)
 
-system_prompt = """You are a grader assessing the relevance of retrieved documents to a user question.
-If the document contains keyword(s) or semantic meaning related to the question, grade it as relevant.
-Give a binary score 'yes' or 'no'.
-Respond ONLY with a JSON object:
-{{"binary_score": "yes"}} or {{"binary_score": "no"}}.
+def get_groq_llm():
+    api_key = os.getenv("GROQ_API_KEY")
+
+    if not api_key:
+        raise RuntimeError(
+            "GROQ_API_KEY not set. Required for runtime execution."
+        )
+
+    return ChatGroq(
+        model="llama-3.1-8b-instant",
+        api_key=api_key,
+    )
+
+
+# ============================================================
+# RETRIEVAL GRADER
+# ============================================================
+
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import JsonOutputParser
+
+system_prompt = """You are a grader assessing relevance.
+Return JSON:
+{"binary_score": "yes"} or {"binary_score": "no"}.
 """
 
 grade_prompt = ChatPromptTemplate.from_messages(
     [
         ("system", system_prompt),
-        ("human", "Retrieved document:\n\n{document}\n\nUser Question: {question}"),
+        ("human", "Document:\n{document}\n\nQuestion:\n{question}"),
     ]
 )
 
-retrieval_grader = grade_prompt | grader_llm | JsonOutputParser()
 
-# -------------------------------
-# RAG Generation Chain (INLINE PROMPT)
-# -------------------------------
+def get_retrieval_grader():
+    llm = get_groq_llm()
+    return grade_prompt | llm | JsonOutputParser()
+
+
+# ============================================================
+# RAG GENERATION
+# ============================================================
+
 from langchain_core.output_parsers import StrOutputParser
 
 rag_prompt = ChatPromptTemplate.from_messages(
     [
         (
             "system",
-            "You are an assistant for question-answering tasks. "
-            "Use the following retrieved context to answer the question. "
-            "If you do not know the answer, say you do not know. "
-            "Use three sentences maximum and keep the answer concise."
+            "Answer using provided context. "
+            "If unknown, say you do not know. "
+            "Keep answer concise (max 3 sentences).",
         ),
         (
             "human",
-            "Question: {question}\n\nContext:\n{context}"
+            "Question: {question}\n\nContext:\n{context}",
         ),
     ]
 )
 
-rag_llm = ChatGroq(
-    model="llama-3.1-8b-instant",
-    api_key=os.getenv("GROQ_API_KEY"),
-)
 
-def format_docs(docs):
-    return "\n\n".join(doc.page_content for doc in docs)
+def get_rag_chain():
+    llm = get_groq_llm()
 
-rag_chain = (
-    {
-        "context": lambda x: format_docs(x.get("documents", [])),
-        "question": lambda x: x["question"],
-    }
-    | rag_prompt
-    | rag_llm
-    | StrOutputParser()
-)
+    return (
+        {
+            "context": lambda x: "\n\n".join(
+                d.page_content for d in x.get("documents", [])
+            ),
+            "question": lambda x: x["question"],
+        }
+        | rag_prompt
+        | llm
+        | StrOutputParser()
+    )
 
-# -------------------------------
-# Question Rewriter
-# -------------------------------
-rewrite_system = """You are a question re-writer that converts an input question
-into a better version optimized for web search.
-Preserve the original intent.
-"""
+
+# ============================================================
+# QUESTION REWRITER
+# ============================================================
 
 rewrite_prompt = ChatPromptTemplate.from_messages(
     [
-        ("system", rewrite_system),
-        ("human", "Original question:\n\n{question}\n\nImproved question:"),
+        (
+            "system",
+            "Rewrite the question to improve web search. Preserve intent.",
+        ),
+        (
+            "human",
+            "Original question:\n{question}\n\nImproved:",
+        ),
     ]
 )
 
-rewrite_llm = ChatGroq(
-    model="llama-3.1-8b-instant",
-    api_key=os.getenv("GROQ_API_KEY"),
-    model_kwargs={"tool_choice": "none"},
-)
 
-question_rewriter = rewrite_prompt | rewrite_llm | StrOutputParser()
+def get_question_rewriter():
+    llm = get_groq_llm()
+    return rewrite_prompt | llm | StrOutputParser()
 
-# -------------------------------
-# Web Search (Safe Wrapper)
-# -------------------------------
+
+# ============================================================
+# WEB SEARCH
+# ============================================================
+
 from langchain_tavily import TavilySearch
 
 web_search_tool = TavilySearch(
     k=3,
     api_key=os.getenv("TAVILY_API_KEY"),
 )
+
 
 def safe_web_search(query: str):
     try:
@@ -195,8 +218,9 @@ def safe_web_search(query: str):
         print("⚠️ Tavily search failed:", e)
         return []
 
-# -------------------------------
-# Backward compatibility exports
-# -------------------------------
+
+# ============================================================
+# BACKWARD COMPATIBILITY EXPORTS
+# ============================================================
+
 embed = get_embeddings()
-llm = rag_llm

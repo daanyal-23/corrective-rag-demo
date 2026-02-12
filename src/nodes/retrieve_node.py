@@ -1,34 +1,24 @@
-from src.tools import retriever
+from src.tools.rag_resources import get_retriever
 from UI.streamlitUI.execution_trace import ExecutionTrace
 
 
 def retrive(state):
-    """
-    Retrieve documents
-    Args:
-        state (dict): The current graph state
-    Returns:
-        state (dict): Updated state with retrieved documents
-    """
-
     trace = ExecutionTrace()
+
     question = state["question"]
 
-    # 🔴 Handle empty / unavailable retriever safely
+    retriever = get_retriever()
+
     if retriever is None:
-        trace.add_step(
-            "🔍 Retrieve Context",
-            "No local documents available — skipping retrieval."
-        )
         state["documents"] = []
         return state
 
-    documents = retriever.invoke(question)
+    docs = retriever.invoke(question)
 
     trace.add_step(
         "🔍 Retrieve Context",
-        f"Retrieved {len(documents)} documents from available sources."
+        f"Retrieved {len(docs)} documents from available sources."
     )
 
-    state["documents"] = documents
+    state["documents"] = docs
     return state

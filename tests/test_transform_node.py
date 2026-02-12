@@ -1,5 +1,3 @@
-from src.nodes.transform_node import transform_query
-
 def test_transform_query(monkeypatch):
 
     class MockRewriter:
@@ -7,15 +5,13 @@ def test_transform_query(monkeypatch):
             return "better question"
 
     monkeypatch.setattr(
-        "src.nodes.transform_node.question_rewriter",
-        MockRewriter()
+        "src.nodes.transform_node.get_question_rewriter",
+        lambda: MockRewriter()
     )
 
-    state = {
-        "question": "bad question",
-        "documents": []
-    }
+    from src.nodes.transform_node import transform_query
 
+    state = {"question": "test", "documents": []}
     result = transform_query(state)
 
     assert result["question"] == "better question"
