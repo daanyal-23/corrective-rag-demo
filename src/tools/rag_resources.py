@@ -1,5 +1,3 @@
-# src/tools/rag_resources.py
-
 import os
 import json
 import streamlit as st
@@ -7,26 +5,22 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# ============================================================
-# EMBEDDINGS
-# ============================================================
-
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import WebBaseLoader
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_tavily import TavilySearch
+from langchain_groq import ChatGroq
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import JsonOutputParser
+from langchain_core.output_parsers import StrOutputParser
+
 
 @st.cache_resource
 def get_embeddings():
     return HuggingFaceEmbeddings(
         model_name="sentence-transformers/all-MiniLM-L6-v2"
     )
-
-
-# ============================================================
-# DOCUMENT LOADING
-# ============================================================
 
 URLS = [
     "https://lilianweng.github.io/posts/2023-06-23-agent/",
@@ -44,11 +38,6 @@ def load_web_docs(urls):
         except Exception as e:
             print(f"⚠️ Failed to load {url}: {e}")
     return docs
-
-
-# ============================================================
-# RETRIEVER (LAZY)
-# ============================================================
 
 @st.cache_resource
 def build_retriever():
@@ -86,13 +75,6 @@ def get_retriever():
     return build_retriever()
 
 
-# ============================================================
-# 🔥 LAZY GROQ INITIALIZATION
-# ============================================================
-
-from langchain_groq import ChatGroq
-
-
 def get_groq_llm():
     api_key = os.getenv("GROQ_API_KEY")
 
@@ -106,13 +88,6 @@ def get_groq_llm():
         api_key=api_key,
     )
 
-
-# ============================================================
-# RETRIEVAL GRADER
-# ============================================================
-
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import JsonOutputParser
 
 system_prompt = """You are a grader assessing relevance.
 Return JSON:
@@ -131,12 +106,6 @@ def get_retrieval_grader():
     llm = get_groq_llm()
     return grade_prompt | llm | JsonOutputParser()
 
-
-# ============================================================
-# RAG GENERATION
-# ============================================================
-
-from langchain_core.output_parsers import StrOutputParser
 
 rag_prompt = ChatPromptTemplate.from_messages(
     [
@@ -170,10 +139,6 @@ def get_rag_chain():
     )
 
 
-# ============================================================
-# QUESTION REWRITER
-# ============================================================
-
 rewrite_prompt = ChatPromptTemplate.from_messages(
     [
         (
@@ -192,10 +157,6 @@ def get_question_rewriter():
     llm = get_groq_llm()
     return rewrite_prompt | llm | StrOutputParser()
 
-
-# ============================================================
-# WEB SEARCH
-# ============================================================
 
 def get_web_search_tool():
     api_key = os.getenv("TAVILY_API_KEY")
@@ -228,9 +189,5 @@ def safe_web_search(query: str):
         print("⚠️ Tavily search failed:", e)
         return []
 
-
-# ============================================================
-# BACKWARD COMPATIBILITY EXPORTS
-# ============================================================
 
 embed = get_embeddings()

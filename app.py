@@ -15,10 +15,10 @@ st.set_page_config(
 
 st.title("🛠️ Corrective RAG (LangGraph + Groq)")
 
-# 🔑 Input stays FIXED at the top
+# Input stays FIXED at the top
 question = st.text_input("Enter your question:")
 
-# 🔑 Dedicated containers (layout anchors)
+# Dedicated containers (layout anchors)
 execution_container = st.container()
 answer_container = st.container()
 
