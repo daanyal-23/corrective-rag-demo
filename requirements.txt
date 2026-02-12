@@ -14,4 +14,4 @@ langchain_huggingface
 langchain_tavily
 langchain-text-splitters
 beautifulsoup4
-
+pytest
