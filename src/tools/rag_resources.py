@@ -15,7 +15,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import WebBaseLoader
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
-
+from langchain_tavily import TavilySearch
 
 @st.cache_resource
 def get_embeddings():
@@ -197,23 +197,33 @@ def get_question_rewriter():
 # WEB SEARCH
 # ============================================================
 
-from langchain_tavily import TavilySearch
+def get_web_search_tool():
+    api_key = os.getenv("TAVILY_API_KEY")
 
-web_search_tool = TavilySearch(
-    k=3,
-    api_key=os.getenv("TAVILY_API_KEY"),
-)
+    if not api_key:
+        raise RuntimeError(
+            "TAVILY_API_KEY not set. Required for runtime execution."
+        )
+
+    return TavilySearch(
+        k=3,
+        api_key=api_key,
+    )
 
 
 def safe_web_search(query: str):
     try:
-        result = web_search_tool.invoke(query)
+        tool = get_web_search_tool()
+        result = tool.invoke(query)
+
         if isinstance(result, str):
             try:
                 return json.loads(result)
             except Exception:
                 return []
+
         return result
+
     except Exception as e:
         print("⚠️ Tavily search failed:", e)
         return []
