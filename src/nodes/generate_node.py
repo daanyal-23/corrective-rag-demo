@@ -1,25 +1,21 @@
 from src.tools.rag_resources import get_rag_chain
 from UI.streamlitUI.execution_trace import ExecutionTrace
 
-MAX_CONTEXT_CHARS = 3000
-
 
 def generate(state):
+    """
+    Generate final answer using RAG chain.
+    """
+
     trace = ExecutionTrace()
 
     question = state.get("question", "")
     docs = state.get("documents", [])
 
-    context = "\n\n".join([doc.page_content for doc in docs])
-
-    if len(context) > MAX_CONTEXT_CHARS:
-        trace.add_advanced_log(
-            f"Context too long ({len(context)} chars). Truncated."
-        )
-
     try:
         chain = get_rag_chain()
 
+        # Pass documents directly — let the chain build context
         response = chain.invoke(
             {
                 "question": question,

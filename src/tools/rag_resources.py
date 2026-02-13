@@ -28,7 +28,6 @@ URLS = [
     "https://github.com/phaneendra2429/Agent-RAG/blob/main/testing.ipynb",
 ]
 
-
 @st.cache_resource
 def load_web_docs(urls):
     docs = []
@@ -86,12 +85,22 @@ def get_groq_llm():
     return ChatGroq(
         model="llama-3.1-8b-instant",
         api_key=api_key,
+        temperature=0
     )
 
 
-system_prompt = """You are a grader assessing relevance.
-Return JSON:
-{"binary_score": "yes"} or {"binary_score": "no"}.
+system_prompt = """
+You are a grader assessing the relevance of a retrieved document to a user question.
+
+If the document contains keywords, concepts, or semantic meaning related to the question,
+mark it as relevant.
+
+Even partial matches should be marked as relevant.
+
+Only give a binary score.
+
+Respond strictly in JSON format:
+{{"binary_score": "yes"}} or {{"binary_score": "no"}}.
 """
 
 grade_prompt = ChatPromptTemplate.from_messages(
@@ -111,9 +120,14 @@ rag_prompt = ChatPromptTemplate.from_messages(
     [
         (
             "system",
-            "Answer using provided context. "
-            "If unknown, say you do not know. "
-            "Keep answer concise (max 3 sentences).",
+            "You are an expert assistant."
+            "Answer the question using the provided context whenever it is relevant. "
+            "If the retrieved context is insufficient but the question concerns general knowledge, you may use your own knowledge to provide a correct and complete answer. "
+            "If the answer is not clearly supported by retrieved documents, state that the response may not be grounded in the retrieved context."
+            "Provide a clear, well-structured explanation (max 7 sentences). "
+            "Explain key concepts in detail and use examples when helpful. "
+            "Prefer factual accuracy over speculation. "
+            "Do not mention that you are using context.",
         ),
         (
             "human",

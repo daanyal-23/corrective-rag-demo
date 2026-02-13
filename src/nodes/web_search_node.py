@@ -19,7 +19,9 @@ def web_search(state):
 
     for item in results:
         if isinstance(item, dict):
-            content = item.get("content") or item.get("snippet") or str(item)
+            title = item.get("title", "")
+            snippet = item.get("content") or item.get("snippet") or ""
+            content = f"Title: {title}\nSnippet: {snippet}"        
         else:
             content = str(item)
 
